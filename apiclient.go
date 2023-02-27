@@ -27,9 +27,9 @@ const (
 	SellSideType sideType = "SELL"
 )
 
-//go:generate mockgen -destination=../mocks/CoinbaseClient.go -package=mocks github.com/QuantFu-Inc/coinbase-adv/client CoinbaseClient
+//go:generate mockgen -destination=./mocks/CoinbaseClient.go -package=mocks github.com/QuantFu-Inc/coinbase-adv/client CoinbaseClient
 
-//go:generate mockgen -destination=../mocks/ApiClient.go -package=mocks github.com/happilymarrieddad/trader-v1/internal/apiclient ApiClient
+//go:generate mockgen -destination=./mocks/ApiClient.go -package=mocks github.com/happilymarrieddad/coinbase-v3-apiclient ApiClient
 type ApiClient interface {
 	CreateOrderAndWaitForCompletion(ctx context.Context, params *CreateLimitMarketOrderParams, timeout time.Time) (orderID string, err error)
 
