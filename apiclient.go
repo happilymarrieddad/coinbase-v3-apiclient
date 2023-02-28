@@ -91,7 +91,7 @@ func (c *apiclient) GetCurrentWallentAmount(
 		c.log("account data not available so fetching from remote service")
 		c.accountUUIDsByTicker = make(map[string]string)
 
-		accs, err := c.client.ListAccounts(&cbadvclient.ListAccountsParams{
+		accs, err := c.client.ListAccounts(ctx, &cbadvclient.ListAccountsParams{
 			Limit: utils.Int32ToPtr(250), // TODO: this won't work when coinbase gets more than 250 coins...
 		})
 		if err != nil {
@@ -110,7 +110,7 @@ func (c *apiclient) GetCurrentWallentAmount(
 	if !exists {
 		return nil, nil, 0, 0, fmt.Errorf("baseTicker '%s' account not available", baseTicker)
 	}
-	currentBaseAcc, err := c.client.GetAccount(baseAccUUID)
+	currentBaseAcc, err := c.client.GetAccount(ctx, baseAccUUID)
 	if err != nil {
 		return nil, nil, 0, 0, err
 	}
@@ -119,7 +119,7 @@ func (c *apiclient) GetCurrentWallentAmount(
 	if !exists {
 		return nil, nil, 0, 0, fmt.Errorf("quoteTicker '%s' account not available", quoteTicker)
 	}
-	currentQuoteAcc, err := c.client.GetAccount(quoteAccUUID)
+	currentQuoteAcc, err := c.client.GetAccount(ctx, quoteAccUUID)
 	if err != nil {
 		return nil, nil, 0, 0, err
 	}
@@ -130,7 +130,7 @@ func (c *apiclient) GetCurrentWallentAmount(
 }
 
 func (c *apiclient) GetProduct(ctx context.Context, baseTicker, quoteTicker string) (product *cbadvmodel.GetProductResponse, err error) {
-	return c.client.GetProduct(fmt.Sprintf("%s-%s", baseTicker, quoteTicker))
+	return c.client.GetProduct(ctx, fmt.Sprintf("%s-%s", baseTicker, quoteTicker))
 }
 
 func (c *apiclient) GetProductMarketData(
@@ -138,7 +138,7 @@ func (c *apiclient) GetProductMarketData(
 ) (highLast24Hr, lowLast24Hr, currentPrice, currentPriceChangePercentage float64, err error) {
 	productID := fmt.Sprintf("%s-%s", baseTicker, quoteTicker)
 
-	resPtr, err := c.client.GetProduct(productID)
+	resPtr, err := c.client.GetProduct(ctx, productID)
 	if err != nil {
 		return 0, 0, 0, 0, err
 	} else if resPtr == nil {
@@ -207,7 +207,7 @@ func (c *apiclient) CreateLimitMarketOrder(ctx context.Context, params *CreateLi
 	coid := fmt.Sprintf("create-market-order-%s-%s-%s-%s", params.Side, params.BaseTicker, params.QuoteTicker, params.ID)
 	productID := fmt.Sprintf("%s-%s", params.BaseTicker, params.QuoteTicker)
 
-	req, err := c.client.CreateOrder(&cbadvmodel.CreateOrderRequest{
+	req, err := c.client.CreateOrder(ctx, &cbadvmodel.CreateOrderRequest{
 		ClientOrderId: utils.StringToPtr(coid),
 		ProductId:     utils.StringToPtr(productID),
 		Side:          utils.StringToPtr(string(params.Side)),
@@ -287,7 +287,7 @@ func (c *apiclient) VerifyMarketOrderCompletion(ctx context.Context, orderID str
 		return err
 	}
 
-	orderRes, err := c.client.GetOrder(orderID)
+	orderRes, err := c.client.GetOrder(ctx, orderID)
 	if err != nil {
 		log.Printf("\n")
 		return err
@@ -338,7 +338,7 @@ func (c *apiclient) VerifyMarketOrderCompletion(ctx context.Context, orderID str
 }
 
 func (c *apiclient) GetOrder(ctx context.Context, orderID string) (*cbadvmodel.Order, error) {
-	res, err := c.client.GetOrder(orderID)
+	res, err := c.client.GetOrder(ctx, orderID)
 	if err != nil {
 		return nil, err
 	}
@@ -347,7 +347,7 @@ func (c *apiclient) GetOrder(ctx context.Context, orderID string) (*cbadvmodel.O
 }
 
 func (c *apiclient) GetOpenOrdersByProductIDAndSide(ctx context.Context, productID string, side cbadvmodel.OrderSide) ([]cbadvmodel.Order, error) {
-	res, err := c.client.ListOrders(&cbadvclient.ListOrdersParams{
+	res, err := c.client.ListOrders(ctx, &cbadvclient.ListOrdersParams{
 		ProductId:   productID,
 		Limit:       250, // This should never even come close to being reached
 		OrderStatus: []string{"OPEN"},
@@ -361,7 +361,7 @@ func (c *apiclient) GetOpenOrdersByProductIDAndSide(ctx context.Context, product
 }
 
 func (c *apiclient) GetOrderFills(ctx context.Context, orderID, productID string) ([]cbadvmodel.OrderFill, error) {
-	res, err := c.client.ListFills(&cbadvclient.ListFillsParams{
+	res, err := c.client.ListFills(ctx, &cbadvclient.ListFillsParams{
 		OrderId:                orderID,
 		ProductId:              productID,
 		Limit:                  250,
@@ -376,7 +376,7 @@ func (c *apiclient) GetOrderFills(ctx context.Context, orderID, productID string
 }
 
 func (c *apiclient) CancelOrders(ctx context.Context, orderIds ...string) (err error) {
-	res, err := c.client.CancelOrders(orderIds)
+	res, err := c.client.CancelOrders(ctx, orderIds)
 	if err != nil {
 		return err
 	}
@@ -398,7 +398,7 @@ func (c *apiclient) CancelOrders(ctx context.Context, orderIds ...string) (err e
 func (c *apiclient) CancelExistingOrders(
 	ctx context.Context, id string, productID string, orderType model.OrderType,
 ) (err error) {
-	ordersRes, err := c.client.ListOrders(&cbadvclient.ListOrdersParams{
+	ordersRes, err := c.client.ListOrders(ctx, &cbadvclient.ListOrdersParams{
 		ProductId:          productID,
 		StartDate:          time.Now().Add(time.Hour * -24),
 		EndDate:            time.Now(),
