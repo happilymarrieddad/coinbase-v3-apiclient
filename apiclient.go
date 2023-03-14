@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/happilymarrieddad/coinbase-v3-apiclient/utils"
 
 	cbadvclient "github.com/QuantFu-Inc/coinbase-adv/client"
@@ -243,7 +244,7 @@ func (c *apiclient) CreateLimitMarketOrder(ctx context.Context, params *CreateLi
 			newQuantity := utils.TrimFloatToRight(params.Quantity, 1)
 			c.log("invalid quantity. current quantity: %f, new quantity: %f", params.Quantity, newQuantity)
 			params.Quantity = newQuantity
-			time.Sleep(time.Millisecond * 50) // just delay slightly
+			time.Sleep(time.Millisecond * 150) // just delay slightly
 			params.NumOfTries++
 			return c.CreateLimitMarketOrder(ctx, params)
 		}
@@ -253,7 +254,7 @@ func (c *apiclient) CreateLimitMarketOrder(ctx context.Context, params *CreateLi
 				newQuantity := utils.TrimFloatToRight(params.Quantity, 1)
 				c.log("invalid quantity. current quantity: %f, new quantity: %f", params.Quantity, newQuantity)
 				params.Quantity = newQuantity
-				time.Sleep(time.Millisecond * 50) // just delay slightly
+				time.Sleep(time.Millisecond * 150) // just delay slightly
 				params.NumOfTries++
 				return c.CreateLimitMarketOrder(ctx, params)
 			}
@@ -261,6 +262,7 @@ func (c *apiclient) CreateLimitMarketOrder(ctx context.Context, params *CreateLi
 
 		// This is just so I can add error handling as I go
 		fmt.Printf("limit market order failed with err: %s\n", req.ErrorResponse.GetError())
+		spew.Dump(req.ErrorResponse)
 		return nil, errors.New(req.ErrorResponse.GetMessage())
 	}
 
